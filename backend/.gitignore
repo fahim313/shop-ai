@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+wheels/
+
+# Virtual environment
+.venv/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+.ruff_cache/
