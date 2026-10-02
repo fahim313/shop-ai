@@ -19,21 +19,40 @@ services:
   api:
     build: ./backend
     container_name: shop_ai_api
+  
     environment:
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${DB_USER:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-shop_ai}
-      DB_SCHEMA: ${DB_SCHEMA:-shop_ai}
-    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+      DB_SCHEMA: ${DB_SCHEMA:-public}
+  
+    volumes:
+      - ./backend/app:/app/app
+  
+    command: >
+      sh -c "alembic upgrade head &&
+      uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --reload"
+  
     ports:
       - "127.0.0.1:8001:8000"
+  
     depends_on:
       db:
         condition: service_healthy
+  
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
