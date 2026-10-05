@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> URL:
         return URL.create(
-            drivername="postgresql+psycopg",
+            drivername="postgresql+asyncpg",
             username=self.db_user,
             password=self.db_password.get_secret_value(),
             host=self.db_host,

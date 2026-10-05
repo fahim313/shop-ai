@@ -2,14 +2,18 @@ services:
   db:
     image: pgvector/pgvector:pg17
     container_name: shop_ai_db
+
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_DB: ${DB_NAME:-shop_ai}
+
     ports:
       - "127.0.0.1:5433:5432"
+
     volumes:
       - pgdata:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
@@ -19,7 +23,7 @@ services:
   api:
     build: ./backend
     container_name: shop_ai_api
-  
+
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -27,24 +31,26 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: ${DB_NAME:-shop_ai}
       DB_SCHEMA: ${DB_SCHEMA:-public}
-  
+
     volumes:
       - ./backend/app:/app/app
-  
+      - ./backend/alembic:/app/alembic
+      - ./backend/scripts:/app/scripts
+
     command: >
       sh -c "alembic upgrade head &&
       uvicorn app.main:app
       --host 0.0.0.0
       --port 8000
       --reload"
-  
+
     ports:
       - "127.0.0.1:8001:8000"
-  
+
     depends_on:
       db:
         condition: service_healthy
-  
+
     healthcheck:
       test:
         [
@@ -61,8 +67,10 @@ services:
   frontend:
     build: ./frontend
     container_name: shop_ai_frontend
+
     ports:
       - "8080:80"
+
     depends_on:
       api:
         condition: service_healthy

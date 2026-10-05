@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.session import get_db
@@ -32,14 +32,16 @@ app.add_middleware(
 
 
 @app.get("/api/health")
-def health(db: Session = Depends(get_db)):
+async def health(db: AsyncSession = Depends(get_db)):
     try:
-        db.execute(text("SELECT 1"))
+        await db.execute(text("SELECT 1"))
 
-        vector = db.execute(
-            text(
-                "SELECT extname FROM pg_extension "
-                "WHERE extname = 'vector'"
+        vector = (
+            await db.execute(
+                text(
+                    "SELECT extname FROM pg_extension "
+                    "WHERE extname = 'vector'"
+                )
             )
         ).scalar()
 
@@ -58,12 +60,12 @@ def health(db: Session = Depends(get_db)):
 
 
 @app.get("/api/products")
-def get_products():
+async def get_products():
     return {"products": products}
 
 
 @app.post("/api/products")
-def create_product(product: Product):
+async def create_product(product: Product):
     products.append(product)
     return {
         "message": "Product created successfully",
