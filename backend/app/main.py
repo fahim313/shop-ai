@@ -1,21 +1,12 @@
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.db.session import get_db
-
-
-class Product(BaseModel):
-    id: int
-    name: str
-    price: float
-
-
-products = []
+from app.modules.auth.router import router as auth_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -28,6 +19,12 @@ app.add_middleware(
     allow_origins=settings.cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+
+app.include_router(
+    auth_router,
+    prefix="/api",
 )
 
 
@@ -56,18 +53,4 @@ async def health(db: AsyncSession = Depends(get_db)):
         "environment": settings.environment,
         "database": "connected",
         "pgvector": vector == "vector",
-    }
-
-
-@app.get("/api/products")
-async def get_products():
-    return {"products": products}
-
-
-@app.post("/api/products")
-async def create_product(product: Product):
-    products.append(product)
-    return {
-        "message": "Product created successfully",
-        "product": product,
     }

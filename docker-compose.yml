@@ -24,13 +24,12 @@ services:
     build: ./backend
     container_name: shop_ai_api
 
+    env_file:
+      - .env
+
     environment:
       DB_HOST: db
       DB_PORT: 5432
-      DB_USER: ${DB_USER:-postgres}
-      DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      DB_NAME: ${DB_NAME:-shop_ai}
-      DB_SCHEMA: ${DB_SCHEMA:-public}
 
     volumes:
       - ./backend/app:/app/app
