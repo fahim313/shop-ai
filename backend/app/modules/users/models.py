@@ -9,6 +9,13 @@ class User(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
+    name: Mapped[str] = mapped_column(
+        String(120),
+        default="",
+        server_default="",
+        nullable=False,
+    )
+
     email: Mapped[str] = mapped_column(
         String(255),
         unique=True,
@@ -18,6 +25,13 @@ class User(TimestampMixin, Base):
 
     password_hash: Mapped[str] = mapped_column(
         String(255),
+        nullable=False,
+    )
+
+    role: Mapped[str] = mapped_column(
+        String(20),
+        default="customer",
+        server_default="customer",
         nullable=False,
     )
 

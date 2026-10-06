@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     db_password: SecretStr = SecretStr("postgres")
     db_name: str = "shop_ai"
     db_schema: str = "public"
+    jwt_secret: str
+    jwt_expire_minutes: int = 480
+    
+    admin_email: str = "admin@noirmen.com"
+    admin_password: str
 
     cors_origins: list[str] = [
         "http://localhost:5173",
