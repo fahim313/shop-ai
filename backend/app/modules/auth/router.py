@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -14,11 +14,5 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
     access_token = await login_user(db, data)
-
-    if access_token is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
 
     return TokenResponse(access_token=access_token)

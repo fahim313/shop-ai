@@ -1,16 +1,27 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.exceptions.exceptions import (
+    AppException,
+    ServiceUnavailableException,
+)
+from app.core.exceptions.handlers import app_exception_handler
 from app.db.session import get_db
 from app.modules.auth.router import router as auth_router
 
 app = FastAPI(
     title=settings.app_name,
     debug=settings.debug,
+)
+
+
+app.add_exception_handler(
+    AppException,
+    app_exception_handler,
 )
 
 
@@ -43,10 +54,7 @@ async def health(db: AsyncSession = Depends(get_db)):
         ).scalar()
 
     except SQLAlchemyError:
-        raise HTTPException(
-            status_code=503,
-            detail="Database unavailable",
-        )
+        raise ServiceUnavailableException("Database unavailable")
 
     return {
         "status": "ok",
