@@ -11,6 +11,8 @@ from app.db.session import get_db
 from app.modules.auth.router import router as auth_router
 from app.modules.categories.admin_router import router as admin_categories_router
 from app.modules.categories.router import router as categories_router
+from app.modules.products.admin_router import router as admin_products_router
+from app.modules.products.router import router as products_router
 
 app = FastAPI(
     title=settings.app_name,
@@ -27,6 +29,8 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/api")
+app.include_router(products_router, prefix="/api")
+app.include_router(admin_products_router, prefix="/api")
 app.include_router(categories_router, prefix="/api")
 app.include_router(admin_categories_router, prefix="/api")
 
