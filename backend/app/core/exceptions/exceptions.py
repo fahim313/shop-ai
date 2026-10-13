@@ -1,12 +1,9 @@
-
 class AppException(Exception):
     status_code: int = 400
     default_message: str = "Bad request"
 
     def __init__(self, message: str | None = None):
-        self.message = (
-            message if message is not None else self.default_message
-        )
+        self.message = message if message is not None else self.default_message
         super().__init__(self.message)
 
 

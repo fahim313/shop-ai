@@ -1,4 +1,3 @@
-
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -10,7 +9,7 @@ from app.core.exceptions.exceptions import ServiceUnavailableException
 from app.core.exceptions.handlers import register_exception_handlers
 from app.db.session import get_db
 from app.modules.auth.router import router as auth_router
-
+from app.modules.categories.router import router as categories_router
 app = FastAPI(
     title=settings.app_name,
     debug=settings.debug,
@@ -30,6 +29,11 @@ app.include_router(
     prefix="/api",
 )
 
+app.include_router(
+    categories_router,
+    prefix="/api",
+)
+
 
 @app.get("/api/health")
 async def health(
@@ -40,17 +44,12 @@ async def health(
 
         vector = (
             await db.execute(
-                text(
-                    "SELECT extname FROM pg_extension "
-                    "WHERE extname = 'vector'"
-                )
+                text("SELECT extname FROM pg_extension WHERE extname = 'vector'")
             )
         ).scalar()
 
     except SQLAlchemyError as exc:
-        raise ServiceUnavailableException(
-            "Database unavailable"
-        ) from exc
+        raise ServiceUnavailableException("Database unavailable") from exc
 
     return {
         "status": "ok",

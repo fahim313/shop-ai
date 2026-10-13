@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     db_schema: str = "public"
     jwt_secret: str
     jwt_expire_minutes: int = 480
-    
+
     admin_email: str = "admin@noirmen.com"
     admin_password: str
 
@@ -54,9 +54,7 @@ class Settings(BaseSettings):
                 "password",
                 "",
             }:
-                raise ValueError(
-                    "A strong database password is required in production"
-                )
+                raise ValueError("A strong database password is required in production")
 
         return self
 
@@ -74,7 +72,7 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings()  # pyright: ignore[reportCallIssue]
 
 
 settings = get_settings()

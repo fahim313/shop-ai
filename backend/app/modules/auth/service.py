@@ -11,9 +11,7 @@ async def login_user(
     db: AsyncSession,
     data: LoginRequest,
 ) -> str:
-    user = await db.scalar(
-        select(User).where(User.email == data.email)
-    )
+    user = await db.scalar(select(User).where(User.email == data.email))
 
     if not user or not user.is_active:
         raise UnauthorizedException("Invalid email or password")

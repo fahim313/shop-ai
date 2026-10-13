@@ -1,4 +1,3 @@
-
 import logging
 from collections.abc import Mapping
 from typing import Any, cast
@@ -73,9 +72,7 @@ async def validation_exception_handler(
 
     for error in exc.errors():
         location = [
-            str(part)
-            for part in error["loc"]
-            if part not in ("body", "query", "path")
+            str(part) for part in error["loc"] if part not in ("body", "query", "path")
         ]
 
         errors.append(

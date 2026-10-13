@@ -10,9 +10,7 @@ from app.modules.users.models import User
 
 async def create_admin() -> None:
     async with SessionLocal() as db:
-        result = await db.scalar(
-            select(User).where(User.email == settings.admin_email)
-        )
+        result = await db.scalar(select(User).where(User.email == settings.admin_email))
 
         if result:
             print(f"Admin already exists: {settings.admin_email}")
