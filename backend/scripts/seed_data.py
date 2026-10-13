@@ -7,7 +7,6 @@ from app.db.session import SessionLocal
 from app.modules.categories.models import Category
 from app.modules.products.models import Product
 
-
 CATEGORIES = [
     {"name": "Panjabi", "slug": "panjabi"},
     {"name": "T-Shirts", "slug": "t-shirts"},
