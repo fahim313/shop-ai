@@ -9,7 +9,9 @@ from app.core.exceptions.exceptions import ServiceUnavailableException
 from app.core.exceptions.handlers import register_exception_handlers
 from app.db.session import get_db
 from app.modules.auth.router import router as auth_router
+from app.modules.categories.admin_router import router as admin_categories_router
 from app.modules.categories.router import router as categories_router
+
 app = FastAPI(
     title=settings.app_name,
     debug=settings.debug,
@@ -24,16 +26,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(
-    auth_router,
-    prefix="/api",
-)
-
-app.include_router(
-    categories_router,
-    prefix="/api",
-)
-
+app.include_router(auth_router, prefix="/api")
+app.include_router(categories_router, prefix="/api")
+app.include_router(admin_categories_router, prefix="/api")
 
 @app.get("/api/health")
 async def health(
