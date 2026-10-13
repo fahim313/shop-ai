@@ -2,6 +2,7 @@ import asyncio
 from logging.config import fileConfig
 
 from sqlalchemy import pool
+from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
@@ -10,6 +11,14 @@ from app.db import all_models  # noqa: F401
 from app.db.base import Base
 
 config = context.config
+
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.database_url.render_as_string(hide_password=False).replace(
+        "%",
+        "%%",
+    ),
+)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -29,7 +38,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection) -> None:
+def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
@@ -41,9 +50,7 @@ def do_run_migrations(connection) -> None:
 
 async def run_async_migrations() -> None:
     connectable = async_engine_from_config(
-        {
-            "sqlalchemy.url": settings.database_url,
-        },
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

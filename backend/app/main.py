@@ -1,3 +1,4 @@
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -5,11 +6,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.exceptions.exceptions import (
-    AppException,
-    ServiceUnavailableException,
-)
-from app.core.exceptions.handlers import app_exception_handler
+from app.core.exceptions.exceptions import ServiceUnavailableException
+from app.core.exceptions.handlers import register_exception_handlers
 from app.db.session import get_db
 from app.modules.auth.router import router as auth_router
 
@@ -18,12 +16,7 @@ app = FastAPI(
     debug=settings.debug,
 )
 
-
-app.add_exception_handler(
-    AppException,
-    app_exception_handler,
-)
-
+register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -32,7 +25,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(
     auth_router,
     prefix="/api",
@@ -40,7 +32,9 @@ app.include_router(
 
 
 @app.get("/api/health")
-async def health(db: AsyncSession = Depends(get_db)):
+async def health(
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, str | bool]:
     try:
         await db.execute(text("SELECT 1"))
 
@@ -53,8 +47,10 @@ async def health(db: AsyncSession = Depends(get_db)):
             )
         ).scalar()
 
-    except SQLAlchemyError:
-        raise ServiceUnavailableException("Database unavailable")
+    except SQLAlchemyError as exc:
+        raise ServiceUnavailableException(
+            "Database unavailable"
+        ) from exc
 
     return {
         "status": "ok",
