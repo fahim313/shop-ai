@@ -29,3 +29,10 @@ class Product(TimestampMixin, Base):
         default=True,
         nullable=False,
     )
+    is_featured: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    
+    is_new: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )

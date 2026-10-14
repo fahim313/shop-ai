@@ -1,39 +1,63 @@
-import { useEffect, useState } from "react";
-import { getProducts } from "../services/productService";
+
+import { useCallback, useEffect, useState } from "react";
+import apiClient from "../services/apiClient";
 
 export default function useProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [error, setError] = useState("");
+
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await apiClient.get("/products");
+      setProducts(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load products"
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let ignore = false;
+    let cancelled = false;
 
-    getProducts()
-      .then((result) => {
-        if (ignore) return;
-        setProducts(result.products ?? []);
-        setError(null);
-      })
-      .catch((err) => {
-        if (ignore) return;
-        setError(err.message);
-      })
-      .finally(() => {
-        if (ignore) return;
-        setLoading(false);
-      });
+    async function loadProducts() {
+      try {
+        const data = await apiClient.get("/products");
+
+        if (!cancelled) {
+          setProducts(data);
+          setError("");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load products"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadProducts();
 
     return () => {
-      ignore = true;
+      cancelled = true;
     };
-  }, [reloadKey]);
+  }, []);
 
-  const refetch = () => {
-    setLoading(true);
-    setReloadKey((key) => key + 1);
+  return {
+    products,
+    loading,
+    error,
+    refetch: fetchProducts,
   };
-
-  return { products, loading, error, refetch };
 }
