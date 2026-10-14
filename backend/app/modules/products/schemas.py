@@ -1,3 +1,4 @@
+
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
@@ -10,6 +11,8 @@ class ProductCreate(BaseModel):
     stock: int = Field(default=0, ge=0)
     image_url: HttpUrl | None = None
     is_active: bool = True
+    is_featured: bool = False
+    is_new: bool = False
 
 
 class ProductUpdate(BaseModel):
@@ -21,6 +24,8 @@ class ProductUpdate(BaseModel):
     stock: int | None = Field(default=None, ge=0)
     image_url: HttpUrl | None = None
     is_active: bool | None = None
+    is_featured: bool | None = None
+    is_new: bool | None = None
 
 
 class ProductResponse(BaseModel):
@@ -35,3 +40,5 @@ class ProductResponse(BaseModel):
     stock: int
     image_url: str | None
     is_active: bool
+    is_featured: bool
+    is_new: bool
