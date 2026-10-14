@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import useProducts from "../hooks/useProducts";
 
 export default function ProductsPage() {
@@ -24,6 +25,10 @@ export default function ProductsPage() {
             <h3>{product.name}</h3>
             <p>Price: ৳{product.price}</p>
             <p>Stock: {product.stock}</p>
+
+            <Link to={`/shop/${product.slug ?? product.id}`}>
+              View Details
+            </Link>
           </article>
         ))}
       </div>

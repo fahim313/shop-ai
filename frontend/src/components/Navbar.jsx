@@ -1,6 +1,8 @@
+
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import { useCart } from "../hooks/useCart";
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -8,6 +10,8 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const { itemCount } = useCart();
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -27,7 +31,7 @@ export default function Navbar() {
         {/* Mobile menu button */}
         <button
           type="button"
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={() => setMenuOpen((open) => !open)}
           className="p-2 text-neutral-800 md:hidden"
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
@@ -63,7 +67,7 @@ export default function Navbar() {
         <div className="flex items-center gap-1 sm:gap-3">
           <button
             type="button"
-            onClick={() => setSearchOpen(!searchOpen)}
+            onClick={() => setSearchOpen((open) => !open)}
             className="p-2 text-neutral-800 transition hover:text-neutral-500"
             aria-label="Toggle search"
             aria-expanded={searchOpen}
@@ -71,12 +75,19 @@ export default function Navbar() {
             {searchOpen ? <X size={20} /> : <Search size={20} />}
           </button>
 
+          {/* Shopping cart */}
           <Link
             to="/cart"
             className="relative p-2 text-neutral-800 transition hover:text-neutral-500"
-            aria-label="Shopping cart"
+            aria-label={`Shopping cart, ${itemCount} items`}
           >
             <ShoppingBag size={20} />
+
+            {itemCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-neutral-950 px-1 text-[10px] font-semibold text-white">
+                {itemCount}
+              </span>
+            )}
           </Link>
         </div>
       </nav>
@@ -96,6 +107,7 @@ export default function Navbar() {
               autoFocus
               className="min-w-0 flex-1 border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900"
             />
+
             <button
               type="submit"
               className="bg-neutral-950 px-5 py-3 text-xs font-semibold uppercase tracking-widest text-white hover:bg-neutral-800"
@@ -125,12 +137,19 @@ export default function Navbar() {
                 {link.label}
               </NavLink>
             ))}
+
             <Link
               to="/cart"
               onClick={() => setMenuOpen(false)}
-              className="py-4 text-xs font-semibold uppercase tracking-widest text-neutral-600"
+              className="flex items-center justify-between border-b border-neutral-100 py-4 text-xs font-semibold uppercase tracking-widest text-neutral-600"
             >
-              Shopping Cart
+              <span>Shopping Cart</span>
+
+              {itemCount > 0 && (
+                <span className="rounded-full bg-neutral-950 px-2 py-1 text-[10px] text-white">
+                  {itemCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>

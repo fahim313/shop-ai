@@ -102,7 +102,7 @@ function ProductCard({ product }) {
 
   return (
     <Link
-      to={`/products/${product.slug ?? product.id}`}
+      to={`/shop/${product.slug ?? product.id}`}
       className="group block"
     >
       <div className="relative aspect[3/4] overflow-hidden bg-neutral-100">
@@ -281,7 +281,7 @@ export default function HomePage() {
 
       {/* Brand Story */}
       <section className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 sm:py-20 md:grid-cols-2 md:items-center lg:px-12">
-        <div className="relative min-h-[320px] overflow-hidden bg-neutral-100 sm:min-h-[440px]">
+        <div className="relative min-h[320px] overflow-hidden bg-neutral-100 sm:min-h[440px]">
           <img
             src={heroImg}
             alt="NOIR MEN collection"
