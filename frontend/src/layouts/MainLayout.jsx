@@ -4,14 +4,14 @@ import Footer from "../components/Footer";
 
 export default function MainLayout() {
   return (
-    <div className="min-h-screen bg-white text-neutral-950">
+    <>
       <Navbar />
 
-      <main>
+      <div className="pt-16 sm:pt-[72px] lg:pt-[102px]">
         <Outlet />
-      </main>
+      </div>
 
       <Footer />
-    </div>
+    </>
   );
 }

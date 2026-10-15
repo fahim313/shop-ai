@@ -1,200 +1,186 @@
-import { Link } from "react-router-dom";
-import {
-  ArrowRight,
-  ShieldCheck,
-  Truck,
-  Headphones,
-} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, ShieldCheck, Truck } from "lucide-react";
 import useProducts from "../hooks/useProducts";
 
-import heroImg from "../assets/images/hero.jpg";
 import panjabiImg from "../assets/images/category-panjabi.jpg";
 import pantsImg from "../assets/images/category-pants.jpg";
 import shirtsImg from "../assets/images/category-shirts.jpg";
 import tshirtsImg from "../assets/images/category-tshirts.jpg";
 
 const categories = [
-  {
-    name: "Shirts",
-    description: "Everyday essentials",
-    image: shirtsImg,
-    search: "shirt",
-  },
-  {
-    name: "Panjabi",
-    description: "Traditional elegance",
-    image: panjabiImg,
-    search: "panjabi",
-  },
-  {
-    name: "T-Shirts",
-    description: "Casual, refined style",
-    image: tshirtsImg,
-    search: "t-shirt",
-  },
-  {
-    name: "Pants",
-    description: "Made for your day",
-    image: pantsImg,
-    search: "pant",
-  },
+  { name: "Panjabi", image: panjabiImg, search: "panjabi" },
+  { name: "Shirts", image: shirtsImg, search: "shirt" },
+  { name: "T-Shirts", image: tshirtsImg, search: "t-shirt" },
+  { name: "Pants", image: pantsImg, search: "pant" },
 ];
 
-function SectionHeading({ eyebrow, title, description }) {
+function SectionHeading({ title, description, link = "/shop" }) {
   return (
-    <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-5 flex items-end justify-between gap-3">
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500">
-          {eyebrow}
-        </p>
-
-        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h2 className="text-[22px] font-semibold leading-tight tracking-tight">
           {title}
         </h2>
-
-        {description && (
-          <p className="mt-2 max-w-xl text-sm leading-6 text-neutral-500">
-            {description}
-          </p>
-        )}
+        <p className="mt-1 text-[13px] text-neutral-500">
+          {description}
+        </p>
       </div>
 
       <Link
-        to="/shop"
-        className="inline-flex items-center gap-2 text-sm font-medium transition hover:text-neutral-500"
+        to={link}
+        className="shrink-0 text-xs underline underline-offset-4 hover:text-neutral-500"
       >
-        Explore all <ArrowRight size={16} />
+        Explore all
       </Link>
     </div>
   );
 }
 
-function CategoryCard({ category }) {
+function CategoryCard({ category, products }) {
+  const nav = useNavigate();
+  const count = products.filter((product) => {
+    const name =
+      typeof product.category === "object"
+        ? product.category?.name
+        : product.category_name ?? product.category;
+
+    return (
+      String(name ?? "").toLowerCase() === category.name.toLowerCase()
+    );
+  }).length;
+
   return (
-    <Link
-      to={`/shop?search=${encodeURIComponent(category.search)}`}
-      className="group relative block aspect[4/5] overflow-hidden bg-neutral-100"
+    <div 
+      onClick={() => nav(`/shop?search=${encodeURIComponent(category.search)}`)} 
+      className="group cursor-pointer"
     >
-      <img
-        src={category.image}
-        alt={category.name}
-        loading="lazy"
-        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-      />
-
-      <div className="absolute inset-0 bg-gradient-to- from-black/75 via-black/10 to-transparent" />
-
-      <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-6">
-        <p className="text-xs text-white/75">{category.description}</p>
-
-        <h3 className="mt-1 text-xl font-semibold">{category.name}</h3>
-
-        <span className="mt-3 inline-flex items-center gap-2 text-sm">
-          Shop now <ArrowRight size={15} />
-        </span>
+      <div className="relative flex aspect-[3/4] items-end justify-center overflow-hidden rounded-lg bg-neutral-100 transition-shadow group-hover:shadow-[0_0_0_1px_#171717]">
+        <img
+          src={category.image}
+          alt={category.name}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+        />
       </div>
-    </Link>
+
+      <h3 className="mt-2.5 text-[13px] font-semibold tracking-normal">
+        {category.name}
+      </h3>
+      <p className="text-xs text-neutral-500">{count} products</p>
+    </div>
   );
 }
 
 function ProductCard({ product }) {
   const price = Number(product.price);
+  const originalPrice = Number(
+    product.original_price ?? product.compare_at_price,
+  );
+
+  const hasDiscount =
+    Number.isFinite(price) &&
+    Number.isFinite(originalPrice) &&
+    originalPrice > price &&
+    originalPrice > 0;
+
+  const discount = hasDiscount
+    ? Math.round(((originalPrice - price) / originalPrice) * 100)
+    : 0;
 
   return (
-    <Link
-      to={`/shop/${product.slug ?? product.id}`}
-      className="group block"
-    >
-      <div className="relative aspect[3/4] overflow-hidden bg-neutral-100">
+    <Link to={`/shop/${product.slug ?? product.id}`} className="group">
+      <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-neutral-100">
         {product.image_url ? (
           <img
             src={product.image_url}
             alt={product.name}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-sm text-neutral-400">
+          <div className="flex h-full items-center justify-center text-xs text-neutral-500">
             No image available
           </div>
         )}
 
         {product.is_new && (
-          <span className="absolute left-3 top-3 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-widest">
+          <span className="absolute left-2.5 top-2.5 rounded bg-neutral-900 px-2 py-0.5 text-[10px] text-white">
             New
+          </span>
+        )}
+
+        {hasDiscount && (
+          <span className="absolute left-2.5 top-2.5 rounded bg-red-700 px-2 py-0.5 text-[10px] text-white">
+            -{discount}%
           </span>
         )}
       </div>
 
-      <div className="pt-4">
-        <h3 className="font-medium transition group-hover:text-neutral-500">
-          {product.name}
-        </h3>
+      <h3 className="mt-2.5 text-[13px] font-semibold leading-tight">
+        {product.name}
+      </h3>
 
-        {product.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-neutral-500">
-            {product.description}
-          </p>
+      <p className="mt-1 text-[13px] font-bold">
+        ৳{Number.isFinite(price) ? price.toLocaleString("en-BD") : product.price}
+        {hasDiscount && (
+          <span className="ml-1.5 text-xs font-normal text-neutral-500 line-through">
+            ৳{originalPrice.toLocaleString("en-BD")}
+          </span>
         )}
+      </p>
 
-        <p className="mt-3 text-sm font-semibold">
-          ৳
-          {Number.isFinite(price)
-            ? price.toLocaleString("en-BD")
-            : product.price}
+      {product.description && (
+        <p className="mt-1 line-clamp-2 text-xs text-neutral-500">
+          {product.description}
         </p>
-      </div>
+      )}
     </Link>
   );
 }
 
 function ProductSection({
-  eyebrow,
   title,
   description,
   products,
   loading,
   error,
+  link = "/shop",
+  emptyMessage,
+  gridCols = "grid-cols-2 md:grid-cols-4",
 }) {
   return (
-    <section className="py-16 sm:py-20">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-        <SectionHeading
-          eyebrow={eyebrow}
-          title={title}
-          description={description}
-        />
+    <section className="pb-2 pt-11">
+      <SectionHeading
+        title={title}
+        description={description}
+        link={link}
+      />
 
-        {loading ? (
-          <p className="py-10 text-center text-sm text-neutral-500">
-            Loading products...
-          </p>
-        ) : error ? (
-          <p className="py-10 text-center text-sm text-red-600">
-            Could not load products. Please try again later.
-          </p>
-        ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 md:grid-cols-4 md:gap-x-6">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        ) : (
-          <p className="py-10 text-center text-sm text-neutral-500">
-            No products available in this section yet.
-          </p>
-        )}
-      </div>
+      {loading ? (
+        <p className="py-8 text-center text-sm text-neutral-500">
+          Loading products...
+        </p>
+      ) : error ? (
+        <p className="py-8 text-center text-sm text-red-600">
+          Could not load products. Please try again later.
+        </p>
+      ) : products.length ? (
+        <div className={`grid gap-x-5 gap-y-6 ${gridCols}`}>
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      ) : (
+        <p className="py-8 text-center text-sm text-neutral-500">
+          {emptyMessage}
+        </p>
+      )}
     </section>
   );
 }
 
 export default function HomePage() {
-  const {
-    products = [],
-    loading,
-    error,
-  } = useProducts();
+  const { products = [], loading, error } = useProducts();
 
   const featuredProducts = products
     .filter((product) => product.is_featured)
@@ -202,182 +188,113 @@ export default function HomePage() {
 
   const newProducts = products
     .filter((product) => product.is_new)
-    .slice(0, 4);
+    .slice(0, 3);
 
   return (
-    <div className="bg-white text-neutral-950">
-      {/* Hero */}
-      <section className="relative min-h[520px] overflow-hidden bg-neutral-950 sm:min-h[620px]">
-        <img
-          src={heroImg}
-          alt="NOIR MEN fashion collection"
-          className="absolute inset-0 h-full w-full object-cover object-center opacity-65"
-        />
-
-        <div className="absolute inset-0 bg-gradient-to from-black/80 via-black/45 to-black/10" />
-
-        <div className="relative mx-auto flex min-h[520px] max-w-7xl items-center px-5 py-20 sm:min-h[620px] sm:px-8 lg:px-12">
-          <div className="max-w-2xl text-white">
-            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.35em] text-white/75">
-              NOIR MEN COLLECTION
-            </p>
-
-            <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
-              Style that
-              <br />
-              speaks for you.
-            </h1>
-
-            <p className="mt-6 max-w-lg text-sm leading-7 text-white/75 sm:text-base">
-              Discover modern menswear designed for your everyday style,
-              from timeless essentials to statement pieces.
-            </p>
-
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-3 bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-neutral-200"
-              >
-                Explore Collection <ArrowRight size={17} />
-              </Link>
-
-              <Link
-                to="/shop?filter=new"
-                className="border border-white/60 px-6 py-3.5 text-sm font-medium text-white transition hover:bg-white hover:text-black"
-              >
-                New Arrivals
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Categories */}
-      <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8 sm:py-20 lg:px-12">
+    <main className="mx-auto w-full max-w-[1020px] px-6 sm:px-10">
+      {/* Shop by Category */}
+      <section className="pb-2 pt-11">
         <SectionHeading
-          eyebrow="Find your style"
           title="Shop by Category"
           description="Explore the essentials for your wardrobe."
         />
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
-          {categories.map((category) => (
-            <CategoryCard key={category.name} category={category} />
-          ))}
-        </div>
+        {loading ? (
+          <p className="py-8 text-center text-sm text-neutral-500">
+            Loading categories...
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4 md:gap-5">
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.name}
+                category={category}
+                products={products}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Featured Products */}
-      <div className="bg-neutral-50">
-        <ProductSection
-          eyebrow="Handpicked for you"
-          title="Featured Products"
-          description="Discover selected pieces from our collection."
-          products={featuredProducts}
-          loading={loading}
-          error={error}
-        />
-      </div>
+      <ProductSection
+        title="Featured Products"
+        description="Top rated pieces from our collection."
+        products={featuredProducts}
+        loading={loading}
+        error={error}
+        emptyMessage="No featured products available yet."
+        gridCols="grid-cols-2 md:grid-cols-4"
+      />
 
-      {/* Brand Story */}
-      <section className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 sm:py-20 md:grid-cols-2 md:items-center lg:px-12">
-        <div className="relative min-h[320px] overflow-hidden bg-neutral-100 sm:min-h[440px]">
-          <img
-            src={heroImg}
-            alt="NOIR MEN collection"
-            loading="lazy"
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        </div>
-
-        <div className="max-w-xl md:pl-6">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-500">
-            The NOIR MEN Identity
-          </p>
-
-          <h2 className="text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-            Confidence in every detail.
-          </h2>
-
-          <p className="mt-5 text-sm leading-7 text-neutral-600">
-            Great style starts with the pieces you choose. Explore a
-            considered collection of menswear for everyday wear and
-            special occasions.
-          </p>
+      {/* Discount Banner */}
+      <section className="py-8">
+        <div className="flex flex-wrap items-center justify-between gap-5 rounded-[10px] bg-neutral-900 p-7 text-white sm:p-11">
+          <div>
+            <h2 className="text-[28px] font-semibold leading-tight tracking-tight">
+              Confidence in every detail.
+            </h2>
+            <p className="mt-2 max-w-[420px] text-sm leading-relaxed text-neutral-400">
+              Use code <strong className="text-white">NOIR10</strong> at
+              checkout for 10% off your order.
+            </p>
+          </div>
 
           <Link
             to="/shop"
-            className="mt-7 inline-flex items-center gap-2 border-b border-black pb-2 text-sm font-semibold"
+            className="inline-flex items-center gap-2 rounded-md border border-white bg-white px-5 py-3 text-[13px] font-semibold text-neutral-900 transition hover:bg-neutral-200"
           >
-            Discover the collection <ArrowRight size={16} />
+            Shop now <ArrowRight size={15} />
           </Link>
         </div>
       </section>
 
       {/* New Arrivals */}
       <ProductSection
-        eyebrow="Just added"
         title="New Arrivals"
         description="Take a look at the latest additions."
         products={newProducts}
         loading={loading}
         error={error}
+        link="/shop?filter=new"
+        emptyMessage="No new arrivals available yet."
+        gridCols="grid-cols-1 sm:grid-cols-3"
       />
 
-      {/* Store Information */}
-      <section className="border-t border-neutral-200 bg-neutral-50">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-5 py-12 sm:grid-cols-3 sm:px-8 lg:px-12">
-          <div className="flex items-center gap-4">
-            <Truck size={25} strokeWidth={1.5} />
-            <div>
-              <h3 className="text-sm font-semibold">
-                Delivery Information
-              </h3>
-              <p className="mt-1 text-xs text-neutral-500">
-                Check delivery details during checkout.
-              </p>
-            </div>
+      {/* Store Benefits */}
+      <section className="mt-8 mb-12 grid grid-cols-1 gap-5 border-y border-neutral-200 py-6 sm:grid-cols-3 sm:gap-5">
+        <div className="flex items-center gap-3">
+          <Truck size={23} strokeWidth={1.5} />
+          <div>
+            <h3 className="text-sm font-semibold">
+              Fast &amp; Reliable Delivery
+            </h3>
+            <p className="text-xs text-neutral-500">
+              Across Bangladesh
+            </p>
           </div>
+        </div>
 
-          <div className="flex items-center gap-4">
-            <ShieldCheck size={25} strokeWidth={1.5} />
-            <div>
-              <h3 className="text-sm font-semibold">Secure Shopping</h3>
-              <p className="mt-1 text-xs text-neutral-500">
-                Browse our collection with confidence.
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <ShieldCheck size={23} strokeWidth={1.5} />
+          <div>
+            <h3 className="text-sm font-semibold">Secure Shopping</h3>
+            <p className="text-xs text-neutral-500">
+              Your data is safe with us
+            </p>
           </div>
+        </div>
 
-          <div className="flex items-center gap-4">
-            <Headphones size={25} strokeWidth={1.5} />
-            <div>
-              <h3 className="text-sm font-semibold">Need Assistance?</h3>
-              <p className="mt-1 text-xs text-neutral-500">
-                Contact us for help with your order.
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[26px] leading-none">↺</span>
+          <div>
+            <h3 className="text-sm font-semibold">Easy Returns</h3>
+            <p className="text-xs text-neutral-500">
+              7 days return policy
+            </p>
           </div>
         </div>
       </section>
-
-      {/* Final CTA */}
-      <section className="bg-neutral-950 px-5 py-16 text-center text-white sm:py-20">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
-          Find your next favorite
-        </p>
-
-        <h2 className="mx-auto mt-4 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
-          Upgrade your everyday style.
-        </h2>
-
-        <Link
-          to="/shop"
-          className="mt-8 inline-flex items-center gap-3 bg-white px-7 py-3.5 text-sm font-semibold text-black transition hover:bg-neutral-200"
-        >
-          Shop Now <ArrowRight size={17} />
-        </Link>
-      </section>
-    </div>
+    </main>
   );
 }
