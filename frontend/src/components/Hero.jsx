@@ -4,19 +4,20 @@ import heroImg from "../assets/images/hero.jpg";
 
 export default function Hero() {
   return (
-    <section className="relative isolate min-h-[440px] overflow-hidden bg-neutral-950 sm:min-h-[520px] lg:min-h-[580px]">
+    <section className="relative isolate min-h-110 overflow-hidden bg-neutral-950 sm:min-h-130 lg:min-h-145">
       <img
         src={heroImg}
         alt="NOIR MEN menswear collection"
-        className="absolute inset-0 -z-20 h-full w-full object-cover object-center"
+        className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_20%]"
       />
 
       <div className="absolute inset-0 -z-10 bg-black/55" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+      <div className="absolute inset-0 -z-10 bg-linear-to-r from-black/75 via-black/35 to-transparent" />
 
-      {/* এখানে max-w-7xl এর বদলে max-w-[1160px] করে দেওয়া হয়েছে যাতে নিচের সেকশনগুলোর সাথে একদম নিখুঁতভাবে মিলে যায় */}
-      <div className="mx-auto flex min-h-[440px] max-w-[1160px] items-center px-4 sm:px-6 sm:min-h-[520px] lg:min-h-[580px]">
-        <div className="max-w-xl text-white">
+      
+      <div className="mx-auto flex min-h-110 max-w-290 items-center px-4 sm:px-6 sm:min-h-13 lg:min-h-14">
+        <div  className="max-w-xl text-white"
+         style={{ transform: "translateY(40px)" }}>
           <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.28em] text-white/75 sm:text-xs">
             The NOIR MEN Collection
           </p>

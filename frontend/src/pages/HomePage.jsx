@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Truck } from "lucide-react";
 import useProducts from "../hooks/useProducts";
 
@@ -7,11 +7,33 @@ import pantsImg from "../assets/images/category-pants.jpg";
 import shirtsImg from "../assets/images/category-shirts.jpg";
 import tshirtsImg from "../assets/images/category-tshirts.jpg";
 
+import CategoryCard from "../components/CategoryCard";
+
 const categories = [
-  { name: "Panjabi", image: panjabiImg, search: "panjabi" },
-  { name: "Shirts", image: shirtsImg, search: "shirt" },
-  { name: "T-Shirts", image: tshirtsImg, search: "t-shirt" },
-  { name: "Pants", image: pantsImg, search: "pant" },
+  {
+    name: "Panjabi",
+    image: panjabiImg,
+    slug: "panjabi",
+    search: "panjabi",
+  },
+  {
+    name: "Shirts",
+    image: shirtsImg,
+    slug: "shirts",
+    search: "shirt",
+  },
+  {
+    name: "T-Shirts",
+    image: tshirtsImg,
+    slug: "t-shirts",
+    search: "t-shirt",
+  },
+  {
+    name: "Pants",
+    image: pantsImg,
+    slug: "pants",
+    search: "pant",
+  },
 ];
 
 function SectionHeading({ title, description, link = "/shop" }) {
@@ -21,6 +43,7 @@ function SectionHeading({ title, description, link = "/shop" }) {
         <h2 className="text-[22px] font-semibold leading-tight tracking-tight">
           {title}
         </h2>
+
         <p className="mt-1 text-[13px] text-neutral-500">
           {description}
         </p>
@@ -36,43 +59,9 @@ function SectionHeading({ title, description, link = "/shop" }) {
   );
 }
 
-function CategoryCard({ category, products }) {
-  const nav = useNavigate();
-  const count = products.filter((product) => {
-    const name =
-      typeof product.category === "object"
-        ? product.category?.name
-        : product.category_name ?? product.category;
-
-    return (
-      String(name ?? "").toLowerCase() === category.name.toLowerCase()
-    );
-  }).length;
-
-  return (
-    <div 
-      onClick={() => nav(`/shop?search=${encodeURIComponent(category.search)}`)} 
-      className="group cursor-pointer"
-    >
-      <div className="relative flex aspect-[3/4] items-end justify-center overflow-hidden rounded-lg bg-neutral-100 transition-shadow group-hover:shadow-[0_0_0_1px_#171717]">
-        <img
-          src={category.image}
-          alt={category.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-        />
-      </div>
-
-      <h3 className="mt-2.5 text-[13px] font-semibold tracking-normal">
-        {category.name}
-      </h3>
-      <p className="text-xs text-neutral-500">{count} products</p>
-    </div>
-  );
-}
-
 function ProductCard({ product }) {
   const price = Number(product.price);
+
   const originalPrice = Number(
     product.original_price ?? product.compare_at_price,
   );
@@ -80,6 +69,7 @@ function ProductCard({ product }) {
   const hasDiscount =
     Number.isFinite(price) &&
     Number.isFinite(originalPrice) &&
+    price >= 0 &&
     originalPrice > price &&
     originalPrice > 0;
 
@@ -87,12 +77,18 @@ function ProductCard({ product }) {
     ? Math.round(((originalPrice - price) / originalPrice) * 100)
     : 0;
 
+  const isNew = Boolean(product.is_new ?? product.isNew);
+  const image = product.image_url ?? product.image;
+
   return (
-    <Link to={`/shop/${product.slug ?? product.id}`} className="group">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-neutral-100">
-        {product.image_url ? (
+    <Link
+      to={`/shop/${product.slug ?? product.id}`}
+      className="group block"
+    >
+      <div className="relative aspect-3/4 overflow-hidden rounded-lg bg-neutral-100">
+        {image ? (
           <img
-            src={product.image_url}
+            src={image}
             alt={product.name}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
@@ -103,14 +99,18 @@ function ProductCard({ product }) {
           </div>
         )}
 
-        {product.is_new && (
+        {isNew && (
           <span className="absolute left-2.5 top-2.5 rounded bg-neutral-900 px-2 py-0.5 text-[10px] text-white">
             New
           </span>
         )}
 
         {hasDiscount && (
-          <span className="absolute left-2.5 top-2.5 rounded bg-red-700 px-2 py-0.5 text-[10px] text-white">
+          <span
+            className={`absolute left-2.5 rounded bg-red-700 px-2 py-0.5 text-[10px] text-white ${
+              isNew ? "top-9" : "top-2.5"
+            }`}
+          >
             -{discount}%
           </span>
         )}
@@ -121,7 +121,11 @@ function ProductCard({ product }) {
       </h3>
 
       <p className="mt-1 text-[13px] font-bold">
-        ৳{Number.isFinite(price) ? price.toLocaleString("en-BD") : product.price}
+        ৳
+        {Number.isFinite(price)
+          ? price.toLocaleString("en-BD")
+          : product.price}
+
         {hasDiscount && (
           <span className="ml-1.5 text-xs font-normal text-neutral-500 line-through">
             ৳{originalPrice.toLocaleString("en-BD")}
@@ -164,7 +168,7 @@ function ProductSection({
         <p className="py-8 text-center text-sm text-red-600">
           Could not load products. Please try again later.
         </p>
-      ) : products.length ? (
+      ) : products.length > 0 ? (
         <div className={`grid gap-x-5 gap-y-6 ${gridCols}`}>
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
@@ -180,23 +184,31 @@ function ProductSection({
 }
 
 export default function HomePage() {
-  const { products = [], loading, error } = useProducts();
+  const {
+    products = [],
+    loading,
+    error,
+  } = useProducts();
 
   const featuredProducts = products
-    .filter((product) => product.is_featured)
+    .filter((product) =>
+      Boolean(product.is_featured ?? product.isFeatured),
+    )
     .slice(0, 4);
 
   const newProducts = products
-    .filter((product) => product.is_new)
+    .filter((product) =>
+      Boolean(product.is_new ?? product.isNew),
+    )
     .slice(0, 3);
 
   return (
-    <main className="mx-auto w-full max-w-[1020px] px-6 sm:px-10">
-      {/* Shop by Category */}
+    <main className="mx-auto w-full max-w-255 px-6 sm:px-10">
       <section className="pb-2 pt-11">
         <SectionHeading
           title="Shop by Category"
           description="Explore the essentials for your wardrobe."
+          link="/shop"
         />
 
         {loading ? (
@@ -207,7 +219,7 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4 md:gap-5">
             {categories.map((category) => (
               <CategoryCard
-                key={category.name}
+                key={category.slug}
                 category={category}
                 products={products}
               />
@@ -216,27 +228,28 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Featured Products */}
       <ProductSection
         title="Featured Products"
         description="Top rated pieces from our collection."
         products={featuredProducts}
         loading={loading}
         error={error}
+        link="/shop"
         emptyMessage="No featured products available yet."
         gridCols="grid-cols-2 md:grid-cols-4"
       />
 
-      {/* Discount Banner */}
       <section className="py-8">
         <div className="flex flex-wrap items-center justify-between gap-5 rounded-[10px] bg-neutral-900 p-7 text-white sm:p-11">
           <div>
             <h2 className="text-[28px] font-semibold leading-tight tracking-tight">
               Confidence in every detail.
             </h2>
-            <p className="mt-2 max-w-[420px] text-sm leading-relaxed text-neutral-400">
-              Use code <strong className="text-white">NOIR10</strong> at
-              checkout for 10% off your order.
+
+            <p className="mt-2 max-w-105 text-sm leading-relaxed text-neutral-400">
+              Use code{" "}
+              <strong className="text-white">NOIR10</strong>{" "}
+              at checkout for 10% off your order.
             </p>
           </div>
 
@@ -249,7 +262,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* New Arrivals */}
       <ProductSection
         title="New Arrivals"
         description="Take a look at the latest additions."
@@ -261,10 +273,10 @@ export default function HomePage() {
         gridCols="grid-cols-1 sm:grid-cols-3"
       />
 
-      {/* Store Benefits */}
-      <section className="mt-8 mb-12 grid grid-cols-1 gap-5 border-y border-neutral-200 py-6 sm:grid-cols-3 sm:gap-5">
+      <section className="mb-12 mt-8 grid grid-cols-1 gap-5 border-y border-neutral-200 py-6 sm:grid-cols-3 sm:gap-5">
         <div className="flex items-center gap-3">
           <Truck size={23} strokeWidth={1.5} />
+
           <div>
             <h3 className="text-sm font-semibold">
               Fast &amp; Reliable Delivery
@@ -277,8 +289,11 @@ export default function HomePage() {
 
         <div className="flex items-center gap-3">
           <ShieldCheck size={23} strokeWidth={1.5} />
+
           <div>
-            <h3 className="text-sm font-semibold">Secure Shopping</h3>
+            <h3 className="text-sm font-semibold">
+              Secure Shopping
+            </h3>
             <p className="text-xs text-neutral-500">
               Your data is safe with us
             </p>
@@ -287,8 +302,11 @@ export default function HomePage() {
 
         <div className="flex items-center gap-3">
           <span className="text-[26px] leading-none">↺</span>
+
           <div>
-            <h3 className="text-sm font-semibold">Easy Returns</h3>
+            <h3 className="text-sm font-semibold">
+              Easy Returns
+            </h3>
             <p className="text-xs text-neutral-500">
               7 days return policy
             </p>

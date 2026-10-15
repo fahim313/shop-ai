@@ -7,7 +7,7 @@ export default function MainLayout() {
     <>
       <Navbar />
 
-      <div className="pt-16 sm:pt-[72px] lg:pt-[102px]">
+      <div className="pt-16 sm:pt-18 lg:pt-23.5">
         <Outlet />
       </div>
 

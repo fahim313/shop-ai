@@ -3,6 +3,8 @@ import MainLayout from "./layouts/MainLayout";
 import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
 import ProductDetails from "./pages/ProductDetails";
+import SearchResults from "./pages/SearchResults";
+
 import Hero from "./components/Hero";
 
 export default function App() {
@@ -19,8 +21,10 @@ export default function App() {
               </>
             }
           />
+
           <Route path="/shop" element={<ProductsPage />} />
           <Route path="/shop/:slug" element={<ProductDetails />} />
+          <Route path="/search" element={<SearchResults />} />
         </Route>
       </Routes>
     </BrowserRouter>
