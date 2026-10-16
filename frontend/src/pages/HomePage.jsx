@@ -1,315 +1,259 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ShieldCheck, Truck } from "lucide-react";
-import useProducts from "../hooks/useProducts";
-
-import panjabiImg from "../assets/images/category-panjabi.jpg";
-import pantsImg from "../assets/images/category-pants.jpg";
-import shirtsImg from "../assets/images/category-shirts.jpg";
-import tshirtsImg from "../assets/images/category-tshirts.jpg";
-
+import { useProducts } from "../context/ProductContext";
+import { api } from "../services/api";
 import CategoryCard from "../components/CategoryCard";
+import ProductGrid from "../components/ProductGrid";
+import SectionHeading from "../components/SectionHeading";
 
-const categories = [
-  {
-    name: "Panjabi",
-    image: panjabiImg,
-    slug: "panjabi",
-    search: "panjabi",
-  },
-  {
-    name: "Shirts",
-    image: shirtsImg,
-    slug: "shirts",
-    search: "shirt",
-  },
-  {
-    name: "T-Shirts",
-    image: tshirtsImg,
-    slug: "t-shirts",
-    search: "t-shirt",
-  },
-  {
-    name: "Pants",
-    image: pantsImg,
-    slug: "pants",
-    search: "pant",
-  },
-];
-
-function SectionHeading({ title, description, link = "/shop" }) {
-  return (
-    <div className="mb-5 flex items-end justify-between gap-3">
-      <div>
-        <h2 className="text-[22px] font-semibold leading-tight tracking-tight">
-          {title}
-        </h2>
-
-        <p className="mt-1 text-[13px] text-neutral-500">
-          {description}
-        </p>
-      </div>
-
-      <Link
-        to={link}
-        className="shrink-0 text-xs underline underline-offset-4 hover:text-neutral-500"
-      >
-        Explore all
-      </Link>
-    </div>
-  );
-}
-
-function ProductCard({ product }) {
-  const price = Number(product.price);
-
-  const originalPrice = Number(
-    product.original_price ?? product.compare_at_price,
-  );
-
-  const hasDiscount =
-    Number.isFinite(price) &&
-    Number.isFinite(originalPrice) &&
-    price >= 0 &&
-    originalPrice > price &&
-    originalPrice > 0;
-
-  const discount = hasDiscount
-    ? Math.round(((originalPrice - price) / originalPrice) * 100)
-    : 0;
-
-  const isNew = Boolean(product.is_new ?? product.isNew);
-  const image = product.image_url ?? product.image;
-
-  return (
-    <Link
-      to={`/shop/${product.slug ?? product.id}`}
-      className="group block"
-    >
-      <div className="relative aspect-3/4 overflow-hidden rounded-lg bg-neutral-100">
-        {image ? (
-          <img
-            src={image}
-            alt={product.name}
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-xs text-neutral-500">
-            No image available
-          </div>
-        )}
-
-        {isNew && (
-          <span className="absolute left-2.5 top-2.5 rounded bg-neutral-900 px-2 py-0.5 text-[10px] text-white">
-            New
-          </span>
-        )}
-
-        {hasDiscount && (
-          <span
-            className={`absolute left-2.5 rounded bg-red-700 px-2 py-0.5 text-[10px] text-white ${
-              isNew ? "top-9" : "top-2.5"
-            }`}
-          >
-            -{discount}%
-          </span>
-        )}
-      </div>
-
-      <h3 className="mt-2.5 text-[13px] font-semibold leading-tight">
-        {product.name}
-      </h3>
-
-      <p className="mt-1 text-[13px] font-bold">
-        ৳
-        {Number.isFinite(price)
-          ? price.toLocaleString("en-BD")
-          : product.price}
-
-        {hasDiscount && (
-          <span className="ml-1.5 text-xs font-normal text-neutral-500 line-through">
-            ৳{originalPrice.toLocaleString("en-BD")}
-          </span>
-        )}
-      </p>
-
-      {product.description && (
-        <p className="mt-1 line-clamp-2 text-xs text-neutral-500">
-          {product.description}
-        </p>
-      )}
-    </Link>
-  );
-}
-
-function ProductSection({
-  title,
-  description,
-  products,
-  loading,
-  error,
-  link = "/shop",
-  emptyMessage,
-  gridCols = "grid-cols-2 md:grid-cols-4",
-}) {
-  return (
-    <section className="pb-2 pt-11">
-      <SectionHeading
-        title={title}
-        description={description}
-        link={link}
-      />
-
-      {loading ? (
-        <p className="py-8 text-center text-sm text-neutral-500">
-          Loading products...
-        </p>
-      ) : error ? (
-        <p className="py-8 text-center text-sm text-red-600">
-          Could not load products. Please try again later.
-        </p>
-      ) : products.length > 0 ? (
-        <div className={`grid gap-x-5 gap-y-6 ${gridCols}`}>
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      ) : (
-        <p className="py-8 text-center text-sm text-neutral-500">
-          {emptyMessage}
-        </p>
-      )}
-    </section>
-  );
-}
-
-export default function HomePage() {
+export default function Home() {
   const {
     products = [],
     loading,
     error,
+    refreshProducts,
   } = useProducts();
 
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCategories() {
+      try {
+        setCategoriesLoading(true);
+        setCategoriesError(null);
+
+        const response = await api.getCategories();
+
+        if (!response.success || !Array.isArray(response.data)) {
+          throw new Error("Invalid categories API response");
+        }
+
+        if (!cancelled) {
+          setCategories(response.data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setCategories([]);
+          setCategoriesError(err.message);
+          console.error("Failed to load categories:", err);
+        }
+      } finally {
+        if (!cancelled) {
+          setCategoriesLoading(false);
+        }
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const featuredProducts = products
-    .filter((product) =>
-      Boolean(product.is_featured ?? product.isFeatured),
-    )
+    .filter((product) => product.is_featured ?? product.isFeatured)
+    .slice(0, 8);
+
+  const newArrivals = products
+    .filter((product) => product.is_new ?? product.isNew)
     .slice(0, 4);
 
-  const newProducts = products
-    .filter((product) =>
-      Boolean(product.is_new ?? product.isNew),
-    )
-    .slice(0, 3);
+  const sectionClass = "mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8";
+
+  if (loading) {
+    return (
+      <main className={`${sectionClass} py-20 text-center`}>
+        <p className="text-gray-600">Loading products...</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className={`${sectionClass} py-20 text-center`}>
+        <p className="mb-4 text-red-600">
+          Failed to load products. Please try again.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => refreshProducts()}
+          className="rounded-md bg-black px-5 py-2 text-white transition hover:bg-gray-800"
+        >
+          Retry
+        </button>
+      </main>
+    );
+  }
 
   return (
-    <main className="mx-auto w-full max-w-255 px-6 sm:px-10">
-      <section className="pb-2 pt-11">
+    <main>
+      {/* Shop by Category */}
+      <section className={`${sectionClass} py-12`}>
         <SectionHeading
           title="Shop by Category"
-          description="Explore the essentials for your wardrobe."
-          link="/shop"
+          subtitle="Explore our collections"
         />
 
-        {loading ? (
-          <p className="py-8 text-center text-sm text-neutral-500">
+        {categoriesLoading ? (
+          <p className="mt-8 text-center text-gray-500">
             Loading categories...
           </p>
-        ) : (
-          <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4 md:gap-5">
+        ) : categoriesError ? (
+          <div className="mt-8 text-center">
+            <p className="text-red-600">Failed to load categories.</p>
+
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-3 rounded-md bg-black px-4 py-2 text-white transition hover:bg-gray-800"
+            >
+              Retry
+            </button>
+          </div>
+        ) : categories.length > 0 ? (
+          <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4">
             {categories.map((category) => (
               <CategoryCard
-                key={category.slug}
+                key={category.id}
                 category={category}
                 products={products}
               />
             ))}
           </div>
+        ) : (
+          <p className="mt-8 text-center text-gray-500">
+            No categories available.
+          </p>
         )}
       </section>
 
-      <ProductSection
-        title="Featured Products"
-        description="Top rated pieces from our collection."
-        products={featuredProducts}
-        loading={loading}
-        error={error}
-        link="/shop"
-        emptyMessage="No featured products available yet."
-        gridCols="grid-cols-2 md:grid-cols-4"
-      />
+      {/* Featured Products */}
+      <section className={`${sectionClass} py-12`}>
+        <SectionHeading
+          title="Featured Products"
+          subtitle="Discover our selected pieces"
+        />
 
-      <section className="py-8">
-        <div className="flex flex-wrap items-center justify-between gap-5 rounded-[10px] bg-neutral-900 p-7 text-white sm:p-11">
+        {featuredProducts.length > 0 ? (
+          <div className="mt-8">
+            <ProductGrid products={featuredProducts} />
+          </div>
+        ) : (
+          <p className="mt-8 text-center text-gray-500">
+            No featured products available.
+          </p>
+        )}
+      </section>
+
+      {/* Promotional Banner */}
+      <section className={`${sectionClass} py-6`}>
+        <div className="flex flex-col items-center justify-between gap-6 rounded-2xl bg-black px-6 py-10 text-center text-white sm:px-10 md:flex-row md:text-left">
           <div>
-            <h2 className="text-[28px] font-semibold leading-tight tracking-tight">
+            <p className="mb-2 text-xs font-medium uppercase tracking-[0.25em] text-gray-400">
+              A little something for you
+            </p>
+
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               Confidence in every detail.
             </h2>
 
-            <p className="mt-2 max-w-105 text-sm leading-relaxed text-neutral-400">
+            <p className="mt-3 text-sm leading-6 text-gray-300">
               Use code{" "}
-              <strong className="text-white">NOIR10</strong>{" "}
+              <span className="font-semibold text-white">NOIR10</span>{" "}
               at checkout for 10% off your order.
             </p>
           </div>
 
           <Link
             to="/shop"
-            className="inline-flex items-center gap-2 rounded-md border border-white bg-white px-5 py-3 text-[13px] font-semibold text-neutral-900 transition hover:bg-neutral-200"
+            className="inline-flex shrink-0 items-center justify-center rounded-md bg-white px-6 py-3 text-sm font-semibold text-black transition hover:bg-gray-200"
           >
-            Shop now <ArrowRight size={15} />
+            Shop Now
+            <span className="ml-2" aria-hidden="true">
+              →
+            </span>
           </Link>
         </div>
       </section>
 
-      <ProductSection
-        title="New Arrivals"
-        description="Take a look at the latest additions."
-        products={newProducts}
-        loading={loading}
-        error={error}
-        link="/shop?filter=new"
-        emptyMessage="No new arrivals available yet."
-        gridCols="grid-cols-1 sm:grid-cols-3"
-      />
+      {/* New Arrivals */}
+      <section className={`${sectionClass} py-12`}>
+        <SectionHeading
+          title="New Arrivals"
+          subtitle="Explore the latest additions"
+        />
 
-      <section className="mb-12 mt-8 grid grid-cols-1 gap-5 border-y border-neutral-200 py-6 sm:grid-cols-3 sm:gap-5">
-        <div className="flex items-center gap-3">
-          <Truck size={23} strokeWidth={1.5} />
-
-          <div>
-            <h3 className="text-sm font-semibold">
-              Fast &amp; Reliable Delivery
-            </h3>
-            <p className="text-xs text-neutral-500">
-              Across Bangladesh
-            </p>
+        {newArrivals.length > 0 ? (
+          <div className="mt-8">
+            <ProductGrid products={newArrivals} />
           </div>
-        </div>
+        ) : (
+          <p className="mt-8 text-center text-gray-500">
+            No new arrivals available.
+          </p>
+        )}
+      </section>
 
-        <div className="flex items-center gap-3">
-          <ShieldCheck size={23} strokeWidth={1.5} />
+      {/* Shopping Benefits */}
+      <section className="border-t border-gray-200 bg-gray-50">
+        <div className={`${sectionClass} py-10`}>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
+            <div className="flex items-center justify-center gap-4 sm:justify-start">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-xl shadow-sm">
+                <span role="img" aria-label="Delivery truck">
+                  🚚
+                </span>
+              </div>
 
-          <div>
-            <h3 className="text-sm font-semibold">
-              Secure Shopping
-            </h3>
-            <p className="text-xs text-neutral-500">
-              Your data is safe with us
-            </p>
-          </div>
-        </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Fast &amp; Reliable Delivery
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Across Bangladesh
+                </p>
+              </div>
+            </div>
 
-        <div className="flex items-center gap-3">
-          <span className="text-[26px] leading-none">↺</span>
+            <div className="flex items-center justify-center gap-4 sm:justify-start">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-xl shadow-sm">
+                <span role="img" aria-label="Security shield">
+                  🛡️
+                </span>
+              </div>
 
-          <div>
-            <h3 className="text-sm font-semibold">
-              Easy Returns
-            </h3>
-            <p className="text-xs text-neutral-500">
-              7 days return policy
-            </p>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Secure Shopping
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Your data is safe with us
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-4 sm:justify-start">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-xl shadow-sm">
+                <span role="img" aria-label="Return">
+                  ↺
+                </span>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Easy Returns
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  7 days return policy
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

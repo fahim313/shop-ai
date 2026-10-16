@@ -3,23 +3,26 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import useProducts from "../hooks/useProducts";
 import { useCart } from "../hooks/useCart";
+import ProductGallery from "../components/ProductGallery";
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("en-BD", {
     style: "currency",
     currency: "BDT",
     maximumFractionDigits: 0,
-  }).format(price);
+  }).format(Number(price) || 0);
 
 export default function ProductDetails() {
   const { slug } = useParams();
-  const { products, loading, error } = useProducts();
+  const { products = [], loading, error } = useProducts();
   const { addToCart } = useCart();
 
   const [quantity, setQuantity] = useState(1);
+  const [cartMessage, setCartMessage] = useState("");
 
   const product = products.find(
-    (item) => item.slug === slug || String(item.id) === slug
+    (item) =>
+      String(item.slug) === slug || String(item.id) === slug
   );
 
   useEffect(() => {
@@ -28,41 +31,54 @@ export default function ProductDetails() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-20">
+      <main className="mx-auto max-w-7xl px-4 py-20 text-center">
         Loading product...
-      </div>
+      </main>
     );
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+      <main className="mx-auto max-w-7xl px-4 py-20 text-center">
         <p className="text-red-600">{error}</p>
         <Link to="/shop" className="mt-4 inline-block underline">
           Back to shop
         </Link>
-      </div>
+      </main>
     );
   }
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center">
+      <main className="mx-auto max-w-7xl px-4 py-20 text-center">
         <h1 className="text-2xl font-bold">Product not found</h1>
         <Link to="/shop" className="mt-4 inline-block underline">
           Back to shop
         </Link>
-      </div>
+      </main>
     );
   }
 
-  const inStock = product.is_active && product.stock > 0;
+  const stock = Math.max(0, Number(product.stock) || 0);
+  const inStock = product.is_active !== false && stock > 0;
+
+  const productImages = Array.isArray(product.images)
+    ? product.images
+    : [];
+
+  const galleryKey = `${product.id}-${product.image_url ?? ""}-${JSON.stringify(
+    productImages
+  )}`;
 
   function handleAddToCart() {
-    if (!inStock) return;
+    if (!inStock || quantity > stock) return;
 
-    addToCart(product, quantity);
-    alert("Product added to cart!");
+    try {
+      addToCart(product, quantity);
+      setCartMessage("Product added to cart.");
+    } catch {
+      setCartMessage("Could not add the product to your cart.");
+    }
   }
 
   return (
@@ -80,19 +96,12 @@ export default function ProductDetails() {
       </nav>
 
       <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:gap-16">
-        <div className="flex min-h-80 items-center justify-center overflow-hidden rounded-lg bg-neutral-100">
-          {product.image_url ? (
-            <img
-              src={product.image_url}
-              alt={product.name}
-              className="max-h[600px] w-full object-contain"
-            />
-          ) : (
-            <div className="p-10 text-center text-neutral-400">
-              Product image coming soon
-            </div>
-          )}
-        </div>
+        <ProductGallery
+          key={galleryKey}
+          images={productImages}
+          imageUrl={product.image_url}
+          name={product.name}
+        />
 
         <section className="py-2">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-500">
@@ -118,7 +127,7 @@ export default function ProductDetails() {
                   inStock ? "bg-emerald-500" : "bg-red-500"
                 }`}
               />
-              {inStock ? `${product.stock} available` : "Out of stock"}
+              {inStock ? `${stock} available` : "Out of stock"}
             </span>
           </div>
 
@@ -136,7 +145,7 @@ export default function ProductDetails() {
           <div className="my-6 border-t border-neutral-200" />
 
           <div className="flex items-center justify-between">
-            <label htmlFor="quantity" className="text-sm font-medium">
+            <label className="text-sm font-medium">
               Quantity
             </label>
 
@@ -153,18 +162,19 @@ export default function ProductDetails() {
                 −
               </button>
 
-              <span id="quantity" className="min-w-10 text-center">
+              <span
+                className="min-w-10 text-center"
+                aria-live="polite"
+              >
                 {quantity}
               </span>
 
               <button
                 type="button"
                 aria-label="Increase quantity"
-                disabled={!inStock || quantity >= product.stock}
+                disabled={!inStock || quantity >= stock}
                 onClick={() =>
-                  setQuantity((value) =>
-                    Math.min(value + 1, product.stock)
-                  )
+                  setQuantity((value) => Math.min(value + 1, stock))
                 }
                 className="px-4 py-2 disabled:opacity-30"
               >
@@ -175,12 +185,21 @@ export default function ProductDetails() {
 
           <button
             type="button"
-            disabled={!inStock}
+            disabled={!inStock || quantity > stock}
             onClick={handleAddToCart}
             className="mt-6 w-full bg-neutral-900 px-6 py-4 text-sm font-semibold uppercase tracking-wider text-white transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
           >
             {inStock ? "Add to Cart" : "Out of Stock"}
           </button>
+
+          {cartMessage && (
+            <p
+              role="status"
+              className="mt-3 text-sm text-neutral-700"
+            >
+              {cartMessage}
+            </p>
+          )}
 
           <div className="mt-6 space-y-3 border-t border-neutral-200 pt-5 text-sm text-neutral-600">
             <p>✓ Cash on Delivery</p>

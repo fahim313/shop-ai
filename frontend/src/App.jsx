@@ -4,8 +4,11 @@ import HomePage from "./pages/HomePage";
 import ProductsPage from "./pages/ProductsPage";
 import ProductDetails from "./pages/ProductDetails";
 import SearchResults from "./pages/SearchResults";
-
+import Cart from "./pages/Cart";
 import Hero from "./components/Hero";
+import Checkout from "./pages/Checkout";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 
 export default function App() {
   return (
@@ -25,6 +28,10 @@ export default function App() {
           <Route path="/shop" element={<ProductsPage />} />
           <Route path="/shop/:slug" element={<ProductDetails />} />
           <Route path="/search" element={<SearchResults />} />
+          <Route path="/cart" element={<Cart />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
         </Route>
       </Routes>
     </BrowserRouter>
